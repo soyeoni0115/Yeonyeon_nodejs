@@ -14,9 +14,6 @@
     ```
 
 
-
-
-
 2. 비교 연산자
 
    1) 둘 다 모두 일때 (&&)
@@ -130,6 +127,7 @@ chores.push('washingdish','cleanRoom');
 ```
 
 - pop: 배열의 마지막 요소를 삭제하고 반환
+
 ```javascript
 const newItemTracker = ['item 0', 'item 1', 'item 2'];
 const removed = newItemTracker.pop();
@@ -348,3 +346,4 @@ console.log(pastaIndex);
             spaceship['homePlanet']= 'moon';
             ```
 
+    3) 메서드
