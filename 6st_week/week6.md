@@ -92,7 +92,7 @@ app.listen(app.get('port'),() => {
 });
 ```
 
-- 모델 정의하기: MySQL에서 정의한 테이블을 시퀄라이즈에서도 정의해야함
+# 모델 정의하기: MySQL에서 정의한 테이블을 시퀄라이즈에서도 정의해야함
     - 시퀄라이즈는 모델과 MySQL의 테이블을 연결해주는 역할을 함
     ```javascript
     //models/user.js
@@ -146,9 +146,76 @@ app.listen(app.get('port'),() => {
         - VARCHAR는 STRING으로, INT는 INTEGER로, TINYINt는 BOOLEAN으로, DATETIME은 DATE로 작성
         - INTEGER.UNSIGNED는 UNSIGNED옵션이 적용된 INT, allowNull은 NOT NULL과 동일, unique는 UNIQUE옵션
     - 모델.init 메서드의 두번째 인수는 테이블 옵션
-        - sequelize
-        - timestamps
-        - underscored
-        - modelName
-        - paranoid: true설정시 deletedAt컬럼 생성됨(로우 삭제시 완전히 지워지지 않고 지워진 시각이 기록록)
-        - charset, collate: 각각 utf8, utf8_general_ci로 한글이 입력됌
+        - sequelize : static initiate 메서드의 매개변수와 연결되는 옵션으로 db.sequelize객체를 넣어야함.
+        - timestamps : true이면 createdAt, updatedAt 컬럼 추가됨. 각각 로우가 생성될 때와 수정될 때의 시간이 자동으로 입력됨.false면 자동으로 날짜 컬럼을 추가하는 기능 해제
+        - underscored : 테이블명과 컬럼명을 캐멀케이스로 만들었던 걸 스네이크케이스로 변경
+        - modelName: 모델 이름을 설정 가능
+        - paranoid: true설정시 deletedAt컬럼 생성됨(로우 삭제시 완전히 지워지지 않고 지워진 시각이 기록)
+        - charset, collate: 각각 utf8, utf8_general_ci로 한글이 입력됌 
+    
+    ```javascript
+    //comment.js
+    const Sequelize = require('sequelize');
+
+    class Comment extends Sequelize.Model {
+    static initiate(sequelize) {
+        Comment.init({
+        comment: {
+            type: Sequelize.STRING(100),
+            allowNull: false,
+        },
+        created_at: {
+            type: Sequelize.DATE,
+            allowNull: true,
+            defaultValue: Sequelize.NOW,
+        },
+        }, {
+        sequelize,
+        timestamps: false,
+        modelName: 'Comment',
+        tableName: 'comments',
+        paranoid: false,
+        charset: 'utf8mb4',
+        collate: 'utf8mb4_general_ci',
+        });
+    }
+
+    static associate(db) {
+        db.Comment.belongsTo(db.User, { foreignKey: 'commenter', targetKey: 'id' });
+    }
+    };
+
+    module.exports = Comment;
+    ```
+    - 모델 생성했다면 models/index.js와 연결함
+
+    ```javascript
+    //index.js
+    const Sequelize = require('sequelize');
+    const User = require('./user');
+    const Comment = require('./comment');
+    ...
+    db.sequelize = sequelize;
+
+    db.User = User;
+    db.Comment = Comment;
+
+    User.initiate(sequelize);
+    Comment.initiate(sequelize);
+
+    User.associate(db);
+    Comment.associate(db);
+
+    module.exports = db;
+    ```
+# 관계 정의하기
+
+## 1:N
+- 1:N 관계를 hasMany라는 메서드로 표현
+- users 테이블의 로우 하나를 불러올 때 연결된 comments테이블의 로우들도 같이 불러올 수 있음.
+- belongsto는 comments테이블의 로우를 불러올 때 연결된 users테이블의 로우 가져옴
+
+## 1:1
+- 1:1 관계를 hasOne이라는 메서드로 표현
+- 1:1 관계라 해도 belongsTo와 hasOne이 반대면 안됨.
+
